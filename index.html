@@ -120,12 +120,28 @@
             font-size: 0.875rem;
             color: #666;
         }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>CSV to Text</h1>
         
+        <div class="error-message" id="errorMessage"></div>
+
         <div class="upload-area" id="uploadArea">
             <label class="upload-label" for="fileInput">
                 Tap to select or drag a CSV file here
@@ -149,8 +165,27 @@
         const fileName = document.getElementById('fileName');
         const contentArea = document.getElementById('contentArea');
         const copyBtn = document.getElementById('copyBtn');
+        const errorMessage = document.getElementById('errorMessage');
         
         let csvContent = '';
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 4000);
+        }
+
+        function showCopiedFeedback() {
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy to Clipboard';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        }
 
         // Click to upload
         uploadArea.addEventListener('click', () => {
@@ -186,7 +221,7 @@
 
         function handleFile(file) {
             if (!file.name.endsWith('.csv') && file.type !== 'text/csv') {
-                alert('Please select a CSV file');
+                showError('Please select a CSV file');
                 return;
             }
 
@@ -196,6 +231,9 @@
             reader.onload = (e) => {
                 csvContent = e.target.result;
                 displayContent(csvContent);
+            };
+            reader.onerror = () => {
+                showError('Error reading file. Please try again.');
             };
             reader.readAsText(file);
         }
@@ -212,13 +250,7 @@
 
             try {
                 await navigator.clipboard.writeText(csvContent);
-                copyBtn.textContent = 'Copied!';
-                copyBtn.classList.add('copied');
-                
-                setTimeout(() => {
-                    copyBtn.textContent = 'Copy to Clipboard';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
+                showCopiedFeedback();
             } catch (err) {
                 // Fallback for older browsers
                 const textarea = document.createElement('textarea');
@@ -230,13 +262,7 @@
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
                 
-                copyBtn.textContent = 'Copied!';
-                copyBtn.classList.add('copied');
-                
-                setTimeout(() => {
-                    copyBtn.textContent = 'Copy to Clipboard';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
+                showCopiedFeedback();
             }
         });
     </script>
